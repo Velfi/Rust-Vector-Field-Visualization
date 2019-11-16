@@ -14,6 +14,8 @@ The noise algorithms demonstrated are:
 - Value Noise
 - Worley Noise
 
+![example]
+
 ## Running The Visualizer
 
 You'll need to have Rust and `cargo` installed. Then, run `cargo run --release` in you terminal of choice.
@@ -32,3 +34,5 @@ You'll need to have Rust and `cargo` installed. Then, run `cargo run --release` 
 | R          | Reset everything                                     |
 | H          | Show or hide this help screen                        |
 | Esc        | Quit and return to the desktop                       |
+
+[example]: /example.png "An example of the visualizer"
