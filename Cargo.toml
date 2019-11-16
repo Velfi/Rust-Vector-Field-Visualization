@@ -1,15 +1,13 @@
 [package]
-name = "vector_field_3"
+name = "vector_field_visualization"
 version = "0.1.0"
-authors = ["Zelda Hessler <zelda.hessler@nerdery.com>"]
+authors = ["Zelda Hessler <zelda.hessler@pm.me>"]
 edition = "2018"
 
 [profile.release]
 debug = true
 
 [dependencies]
-ncollide2d = "0.17"
-nalgebra = "0.16"
-ggez = "0.4"
-rand = "0.6"
-noise = "0.5"
+ggez = "^0.5"
+rand = "^0.6"
+noise = "^0.5"
