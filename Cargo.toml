@@ -1,13 +1,13 @@
 [package]
 name = "vector_field_visualization"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Zelda Hessler <zelda.hessler@pm.me>"]
 edition = "2018"
 
-[profile.release]
-debug = true
-
 [dependencies]
-ggez = "^0.5"
-rand = "^0.6"
-noise = "^0.5"
+itertools = "0.10.0"
+nannou = "0.16.0"
+noise = "0.7.0"
+rand = "0.8.3"
+rayon = "1.5.0"
+zelda_lib = { path = "../zelda_lib" }
