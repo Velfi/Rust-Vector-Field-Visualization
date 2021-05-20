@@ -13,29 +13,28 @@
 //! H           Show or hide this help screen
 //! Esc         Quit and return to the desktop
 
-use ggez::event::KeyMods;
-use ggez::{
-    conf, event, event::EventHandler, event::KeyCode, graphics, mint::Point2, Context,
-    ContextBuilder, GameResult,
-};
-use noise::{self, NoiseFn};
-use std::borrow::Borrow;
-
 mod line_segment;
 
 use self::line_segment::LineSegment;
+use ggez::{
+    conf::{WindowMode, WindowSetup},
+    event::{EventHandler, KeyCode, KeyMods},
+    graphics, Context, ContextBuilder, GameResult,
+};
+use noise::NoiseFn;
+use std::borrow::Borrow;
 
 const GRID_CELL_W: f32 = SCREEN_W as f32 / GRID_SIZE_X as f32;
 const GRID_CELL_H: f32 = SCREEN_H as f32 / GRID_SIZE_Y as f32;
-const GRID_SIZE_X: usize = 48;
-const GRID_SIZE_Y: usize = 30;
+const GRID_SIZE_X: usize = 96;
+const GRID_SIZE_Y: usize = 60;
 const DEFAULT_MOVE_SPEED: f32 = 0.05;
 const DEFAULT_NOISE_SCALE: f32 = 0.01;
 const DEFAULT_NOISE_SCALE_INCREMENT: f32 = DEFAULT_NOISE_SCALE * 0.2;
 const DEFAULT_NOISE_SPEED: f32 = 0.00001;
 const DEFAULT_NOISE_SPEED_INCREMENT: f32 = DEFAULT_NOISE_SPEED * 0.2;
-const SCREEN_W: usize = 1440;
-const SCREEN_H: usize = 900;
+const SCREEN_W: usize = 1920;
+const SCREEN_H: usize = 1080;
 const TWO_PI: f32 = std::f32::consts::PI + std::f32::consts::PI;
 const VECTOR_SCALE: f32 = 20.0;
 const VECTOR_WIDTH: f32 = 2.0;
@@ -48,13 +47,13 @@ struct State {
     line_segments: Vec<LineSegment>,
     noise_scale: f32,
     noise_speed: f32,
-    noise_vec: Vec<Box<dyn NoiseFn<noise::Point3<f64>>>>,
+    noise_vec: Vec<Box<dyn NoiseFn<[f64; 3]>>>,
     z_offset: f32,
     show_help: bool,
 }
 
 impl State {
-    fn active_noise(&self) -> &dyn NoiseFn<noise::Point3<f64>> {
+    fn active_noise(&self) -> &dyn NoiseFn<[f64; 3]> {
         self.noise_vec[self.active_noise_index.count()].borrow()
     }
 
@@ -111,9 +110,7 @@ impl EventHandler for State {
             graphics::draw(
                 ctx,
                 line_mesh,
-                graphics::DrawParam::new()
-                    .dest(Point2 { x: 0.0, y: 0.0 })
-                    .rotation(0.0),
+                graphics::DrawParam::new().dest([0.0, 0.0]).rotation(0.0),
             )?;
         }
 
@@ -157,17 +154,25 @@ impl EventHandler for State {
 }
 
 fn main() {
-    let mut c = conf::Conf::new();
-    c.window_mode.fullscreen_type = conf::FullscreenType::True;
-    c.window_mode.height = SCREEN_H as f32;
-    c.window_mode.width = SCREEN_W as f32;
+    let window_mode = WindowMode {
+        height: SCREEN_H as f32,
+        width: SCREEN_W as f32,
+        ..Default::default()
+    };
 
-    let cb = ContextBuilder::new("Vector Field", "Zelda Hessler").conf(c);
-    let (mut ctx, mut events_loop) = cb.build().unwrap();
+    let window_setup = WindowSetup {
+        title: "Vector Field".to_owned(),
+        ..Default::default()
+    };
+
+    let cb = ContextBuilder::new("Vector Field", "Zelda Hessler")
+        .window_setup(window_setup)
+        .window_mode(window_mode);
+    let (ctx, events_loop) = cb.build().unwrap();
 
     let noise_vec = gen_noise_vec();
 
-    let state = &mut State {
+    let state = State {
         active_noise_index: Counter::new(0, noise_vec.len() - 1),
         base_x_offset: 0.0,
         base_y_offset: 0.0,
@@ -182,19 +187,19 @@ fn main() {
 
     // graphics::set_background_color(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0));
 
-    event::run(&mut ctx, &mut events_loop, state).unwrap();
+    ggez::event::run(ctx, events_loop, state)
 }
 
-fn gen_line_segments(noise: &dyn NoiseFn<noise::Point3<f64>>, z_offset: f32) -> Vec<LineSegment> {
+fn gen_line_segments(noise: &dyn NoiseFn<[f64; 3]>, z_offset: f32) -> Vec<LineSegment> {
     // I wish I didn't have to create these as they get thrown away immediately.
     let mut positions = Vec::with_capacity(GRID_SIZE_X * GRID_SIZE_Y);
 
     for y in 0..GRID_SIZE_Y {
         for x in 0..GRID_SIZE_X {
-            let p0 = Point2 {
-                x: x as f32 * GRID_CELL_W + GRID_CELL_W / 2.0,
-                y: y as f32 * GRID_CELL_H + GRID_CELL_H / 2.0,
-            };
+            let p0 = [
+                x as f32 * GRID_CELL_W + GRID_CELL_W / 2.0,
+                y as f32 * GRID_CELL_H + GRID_CELL_H / 2.0,
+            ];
 
             let angle: f32 = noise.get([x as f64, y as f64, f64::from(z_offset)]) as f32 * TWO_PI;
 
@@ -205,11 +210,11 @@ fn gen_line_segments(noise: &dyn NoiseFn<noise::Point3<f64>>, z_offset: f32) -> 
     positions
 }
 
-fn gen_noise_vec() -> Vec<Box<dyn NoiseFn<noise::Point3<f64>>>> {
+fn gen_noise_vec() -> Vec<Box<dyn NoiseFn<[f64; 3]>>> {
     vec![
         Box::new(noise::BasicMulti::new()),
         Box::new(noise::Billow::new()),
-        Box::new(noise::Checkerboard::new()),
+        Box::new(noise::Checkerboard::new(1)),
         Box::new(noise::Fbm::new()),
         Box::new(noise::HybridMulti::new()),
         Box::new(noise::OpenSimplex::new()),
