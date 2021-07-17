@@ -33,6 +33,9 @@ You'll need to have Rust and `cargo` installed. Then, run `cargo run --release` 
 | H          | Show or hide the help screen                         |
 | R          | Reset everything                                     |
 | H          | Show or hide this help screen                        |
+| X          | Render the current vectors to an SVG                 |
 | Esc        | Quit and return to the desktop                       |
+
+For SVG export to work, you must set the `SVG_EXPORT_DIRECTORY` environment variable to a valid directory.
 
 [example]: /example.png "An example of the visualizer"

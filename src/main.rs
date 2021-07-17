@@ -16,13 +16,16 @@
 mod line_segment;
 
 use self::line_segment::LineSegment;
+use chrono::Local;
 use ggez::{
     conf::{WindowMode, WindowSetup},
     event::{EventHandler, KeyCode, KeyMods},
-    graphics, Context, ContextBuilder, GameResult,
+    graphics, Context, ContextBuilder, GameError, GameResult,
 };
+use log::{error, info, warn};
 use noise::NoiseFn;
-use std::borrow::Borrow;
+use std::{borrow::Borrow, path::PathBuf};
+use svg::node::element;
 
 const GRID_CELL_W: f32 = SCREEN_W as f32 / GRID_SIZE_X as f32;
 const GRID_CELL_H: f32 = SCREEN_H as f32 / GRID_SIZE_Y as f32;
@@ -66,7 +69,7 @@ impl State {
     }
 }
 
-impl EventHandler for State {
+impl EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult<()> {
         let mut y_offset = 0.0 + self.base_y_offset;
         for y in 0..GRID_SIZE_Y {
@@ -147,6 +150,7 @@ impl EventHandler for State {
                 self.noise_scale = DEFAULT_NOISE_SCALE;
             }
             KeyCode::H => self.show_help = !self.show_help,
+            KeyCode::X => export_as_svg(&self),
             KeyCode::Escape => ggez::event::quit(ctx),
             _ => (), // Do nothing
         }
@@ -154,6 +158,12 @@ impl EventHandler for State {
 }
 
 fn main() {
+    let res = dotenv::dotenv();
+    env_logger::init();
+    if let Err(err) = res {
+        warn!("{}", err)
+    };
+
     let window_mode = WindowMode {
         height: SCREEN_H as f32,
         width: SCREEN_W as f32,
@@ -270,4 +280,82 @@ impl Counter {
             None => self.count = self.max,
         };
     }
+}
+
+fn export_as_svg(state: &State) {
+    info!("exporting image as SVG...");
+    let base_path = std::env::var("SVG_EXPORT_DIRECTORY");
+
+    if base_path.is_err() {
+        error!("SVG export failed: SVG_EXPORT_DIRECTORY must be set to a valid directory in order to export and SVG");
+        return;
+    }
+
+    let base_path = base_path.unwrap();
+
+    let document = build_svg_document_from_state(state);
+    let current_date = Local::today().format("%Y-%m-%d");
+    let svg_filename = format!("{}-vector-field-visualization.svg", &current_date);
+    let mut svg_filepath: PathBuf = [base_path, svg_filename].iter().collect();
+
+    // I don't want to silently overwrite anything so I look for an unused filename,
+    // incrementing the counter until I find an unused number
+    // I could have also used a random string/number, I just like this better
+    if svg_filepath.exists() {
+        let mut counter = 1;
+
+        while svg_filepath.exists() {
+            if counter > 100 {
+                warn!(
+                    "export_as_svg counter has reached {}, you're not in an infinite loop are you?",
+                    counter
+                );
+            }
+
+            let _ = svg_filepath.pop();
+            let svg_filename = format!(
+                "{}-vector-field-visualization-{}.svg",
+                &current_date, &counter
+            );
+            svg_filepath.push(svg_filename);
+            counter += 1;
+        }
+    }
+
+    svg::save(&svg_filepath, &document).expect("couldn't save SVG");
+    info!(
+        "SVG successfully exported to {}",
+        &svg_filepath.to_string_lossy()
+    );
+}
+
+fn build_svg_document_from_state(state: &State) -> svg::Document {
+    let doc = svg::Document::new().set("viewBox", (0, 0, SCREEN_W, SCREEN_H));
+
+    let mut group = svg::node::element::Group::new()
+        .set("fill", "none")
+        .set("stroke", "black")
+        .set("stroke-width", "0.3mm");
+
+    info!("rendering {} lines", state.line_segments.len());
+
+    for line in state.line_segments.iter() {
+        let [[x1, y1], [x2, y2]] = line.points;
+        let path = element::Line::new()
+            .set("x1", x1)
+            .set("y1", y1)
+            .set("x2", x2)
+            .set("y2", y2);
+
+        group = group.add(path);
+    }
+
+    let bounding_rect = svg::node::element::Rectangle::new()
+        .set("width", SCREEN_W)
+        .set("height", SCREEN_H)
+        .set("fill", "none")
+        .set("stroke", "black")
+        .set("stroke-width", "1mm");
+
+    doc.add(group).add(bounding_rect)
 }
