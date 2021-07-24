@@ -25,6 +25,7 @@ You'll need to have Rust and `cargo` installed. Then, run `cargo run --release` 
 | key        | what it does                                         |
 | ---------- | ---------------------------------------------------- |
 | N and B    | Cycle forward and back through Noise types           |
+| J and K    | Cycle forward and back through Visualizer types      |
 | + and -    | Zoom in and out by changing the "scale" of the noise |
 | ] and [    | Speed up or slow down the rate of change             |
 | Arrow Keys | Move around by offsetting generated noise            |
