@@ -3,19 +3,23 @@ mod domain_warping_noise;
 use domain_warping_noise::DomainWarpingNoise;
 use noise::NoiseFn;
 
+use crate::noise::domain_warping_noise::DomainWarpingNoiseParams;
+
 pub fn new_noise_fn_by_index(index: usize) -> Box<dyn NoiseFn<[f64; 3]>> {
     match index {
         0 => {
-            println!("now using Billowy Noise generator");
-            Box::new(noise::Billow::new())
+            println!("now using Domain Warping Noise generator");
+            let dwn_params = DomainWarpingNoiseParams::random();
+            Box::new(DomainWarpingNoise::new(dwn_params))
         }
         1 => {
-            println!("now using Heterogenous Multifractal Noise generator");
-            Box::new(noise::BasicMulti::new())
+            println!("now using Billowy Noise generator");
+            // TODO allow setting frequency, lacunarity, octaves, persistence
+            Box::new(noise::Billow::new())
         }
         2 => {
-            println!("now using Domain Warping Noise generator");
-            Box::new(DomainWarpingNoise::new())
+            println!("now using Heterogenous Multifractal Noise generator");
+            Box::new(noise::BasicMulti::new())
         }
         3 => {
             println!("now using Fractal Brownian Motion Noise generator");
