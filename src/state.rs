@@ -1,18 +1,20 @@
-use crate::circles::Circles;
-use crate::consts::{
-    DEFAULT_MOVE_SPEED, DEFAULT_NOISE_SCALE, DEFAULT_NOISE_SCALE_INCREMENT, DEFAULT_NOISE_SPEED,
-    DEFAULT_NOISE_SPEED_INCREMENT,
+use crate::{
+    circles::Circles,
+    consts::{
+        DEFAULT_MOVE_SPEED, DEFAULT_NOISE_SCALE, DEFAULT_NOISE_SCALE_INCREMENT,
+        DEFAULT_NOISE_SPEED, DEFAULT_NOISE_SPEED_INCREMENT,
+    },
+    counter::Counter,
+    line_segments::LineSegments,
+    noise::new_noise_fn_by_index,
+    visualizer::{Visualizer, VisualizerParams},
 };
-use crate::counter::Counter;
-use crate::line_segments::LineSegments;
-use crate::visualizer::{Visualizer, VisualizerParams};
 use chrono::Local;
 use ggez::{
     event::{EventHandler, KeyCode, KeyMods},
     graphics, Context, GameError, GameResult,
 };
 use log::{error, info, warn};
-use noise::{Fbm, NoiseFn};
 use std::path::PathBuf;
 
 pub struct State {
@@ -27,7 +29,6 @@ impl State {
     pub fn new() -> Self {
         let params = VisualizerParams::default();
         let visualizer = Box::new(LineSegments::new(&params));
-        // let visualizer = Box::new(Circles::new(&params));
 
         Self {
             // There are nine noise algos to choose from
@@ -60,49 +61,7 @@ impl State {
     }
 
     fn set_noise_fn(&mut self, index: usize) {
-        match index {
-            0 => {
-                println!("now using Domain Warping Noise generator");
-                // println!("now using Billowy Noise generator");
-                // self.params.noise_fn = Box::new(noise::Billow::new());
-                // Image for f(p) = fbm(p+fbm(p+fbm(p)))
-                let noise_fn = DomainWarpingNoise::new();
-                self.params.noise_fn = Box::new(noise_fn);
-            }
-            1 => {
-                println!("now using Heterogenous Multifractal Noise generator");
-                self.params.noise_fn = Box::new(noise::BasicMulti::new());
-            }
-            2 => {
-                println!("now using Checkerboard Noise generator");
-                self.params.noise_fn = Box::new(noise::Checkerboard::new(1));
-            }
-            3 => {
-                println!("now using Fractal Brownian Motion Noise generator");
-                self.params.noise_fn = Box::new(noise::Fbm::new());
-            }
-            4 => {
-                println!("now using Hybrid Multifractal Noise generator");
-                self.params.noise_fn = Box::new(noise::HybridMulti::new());
-            }
-            5 => {
-                println!("now using Open Simplex Noise generator");
-                self.params.noise_fn = Box::new(noise::OpenSimplex::new());
-            }
-            6 => {
-                println!("now using Perlin Noise generator");
-                self.params.noise_fn = Box::new(noise::Perlin::new());
-            }
-            7 => {
-                println!("now using Value Noise generator");
-                self.params.noise_fn = Box::new(noise::Value::new());
-            }
-            8 => {
-                println!("now using Worley Noise generator");
-                self.params.noise_fn = Box::new(noise::Worley::new());
-            }
-            _ => unreachable!(),
-        }
+        self.params.noise_fn = new_noise_fn_by_index(index);
     }
 
     fn set_visualizer(&mut self, index: usize) {
@@ -225,53 +184,4 @@ impl EventHandler<GameError> for State {
             _ => (), // Do nothing
         }
     }
-}
-
-struct DomainWarpingNoise {
-    fbm: Fbm,
-}
-
-impl DomainWarpingNoise {
-    pub fn new() -> Self {
-        Self { fbm: Fbm::new() }
-    }
-}
-
-// Image for f(p) = fbm(p+fbm(p+fbm(p)))
-impl NoiseFn<[f64; 3]> for DomainWarpingNoise {
-    fn get(&self, p: [f64; 3]) -> f64 {
-        let q = vec3(
-            self.fbm.get(add(p, vec3(0.0, 0.0, 1.0))),
-            self.fbm.get(add(p, vec3(5.2, 1.3, 1.0))),
-            self.fbm.get(add(p, vec3(1.0, 1.0, 1.0))),
-        );
-
-        let q = mul_n(q, 4.0);
-
-        let r = vec3(
-            self.fbm.get(add(p, add(q, vec3(1.7, 9.2, 1.0)))),
-            self.fbm.get(add(p, add(q, vec3(8.3, 2.8, 1.0)))),
-            self.fbm.get(add(p, add(q, vec3(1.0, 1.0, 1.0)))),
-        );
-
-        let r = mul_n(r, 4.0);
-        self.fbm.get(add(p, r))
-    }
-}
-
-fn vec3(x: f64, y: f64, z: f64) -> [f64; 3] {
-    [x, y, z]
-}
-
-fn add(xyz_1: [f64; 3], xyz_2: [f64; 3]) -> [f64; 3] {
-    let [x1, y1, z1] = xyz_1;
-    let [x2, y2, z2] = xyz_2;
-
-    [x1 + x2, y1 + y2, z1 + z2]
-}
-
-fn mul_n(xyz: [f64; 3], n: f64) -> [f64; 3] {
-    let [x, y, z] = xyz;
-
-    [x * n, y * n, z * n]
 }

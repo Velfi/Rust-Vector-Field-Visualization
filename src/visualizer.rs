@@ -1,7 +1,9 @@
+use crate::{
+    consts::{DEFAULT_NOISE_SCALE, DEFAULT_NOISE_SPEED},
+    noise::new_noise_fn_by_index,
+};
 use ggez::{graphics::Mesh, Context};
 use noise::NoiseFn;
-
-use crate::consts::{DEFAULT_NOISE_SCALE, DEFAULT_NOISE_SPEED};
 
 pub struct VisualizerParams {
     pub base_x_offset: f64,
@@ -14,7 +16,7 @@ pub struct VisualizerParams {
 
 impl Default for VisualizerParams {
     fn default() -> Self {
-        let noise_fn = Box::new(noise::Billow::new());
+        let noise_fn = new_noise_fn_by_index(0);
 
         Self {
             base_x_offset: 0.0,

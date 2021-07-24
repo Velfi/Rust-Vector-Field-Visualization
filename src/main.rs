@@ -17,6 +17,7 @@ mod circles;
 mod consts;
 mod counter;
 mod line_segments;
+mod noise;
 mod state;
 mod visualizer;
 
