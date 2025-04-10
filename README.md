@@ -14,7 +14,7 @@ The noise algorithms demonstrated are:
 - Value Noise
 - Worley Noise
 
-![Example.mov]
+![Example]
 
 ## Running The Visualizer
 
