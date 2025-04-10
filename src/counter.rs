@@ -5,12 +5,14 @@ pub struct Counter {
 }
 
 impl Counter {
+    /// Creates a new Counter with the given minimum and maximum values.
     pub fn new(min: usize, max: usize) -> Self {
         assert!(min <= max);
 
         Counter { count: 0, min, max }
     }
 
+    /// Get the current count.
     pub fn count(&self) -> usize {
         self.count
     }

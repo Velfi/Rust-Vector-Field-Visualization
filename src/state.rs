@@ -10,12 +10,10 @@ use crate::{
     visualizer::{Visualizer, VisualizerParams},
 };
 use chrono::Local;
-use ggez::{
-    event::{EventHandler, KeyCode, KeyMods},
-    graphics, Context, GameError, GameResult,
-};
 use log::{error, info, warn};
 use std::path::PathBuf;
+use macroquad::miniquad::window::quit;
+use macroquad::prelude::*;
 
 pub struct State {
     active_noise_index: Counter,
@@ -31,13 +29,60 @@ impl State {
         let visualizer = Box::new(LineSegments::new(&params));
 
         Self {
-            // There are nine noise algos to choose from
+            // There are nine noise algorithms to choose from
             active_noise_index: Counter::new(0, 8),
             active_visualizer_index: Counter::new(0, 1),
             visualizer,
             params,
             show_help: true,
         }
+    }
+
+    pub fn update(&mut self) {
+        if is_key_pressed(KeyCode::B) { self.previous_noise() }
+        if is_key_pressed(KeyCode::N) { self.next_noise() }
+        if is_key_pressed(KeyCode::J) { self.previous_visualizer() }
+        if is_key_pressed(KeyCode::K) { self.next_visualizer() }
+        if is_key_down(KeyCode::Minus) { self.params.noise_scale += DEFAULT_NOISE_SCALE_INCREMENT }
+        if is_key_down(KeyCode::Equal) { self.params.noise_scale = (self.params.noise_scale - DEFAULT_NOISE_SCALE_INCREMENT).max(DEFAULT_NOISE_SCALE / 10.0) }
+        if is_key_down(KeyCode::LeftBracket) { self.params.noise_speed = (self.params.noise_speed - DEFAULT_NOISE_SPEED_INCREMENT).max(0.0) }
+        if is_key_down(KeyCode::RightBracket) { self.params.noise_speed += DEFAULT_NOISE_SPEED_INCREMENT }
+        if is_key_down(KeyCode::Left) { self.params.base_x_offset -= DEFAULT_MOVE_SPEED }
+        if is_key_down(KeyCode::Right) { self.params.base_x_offset += DEFAULT_MOVE_SPEED }
+        if is_key_down(KeyCode::Up) { self.params.base_y_offset -= DEFAULT_MOVE_SPEED }
+        if is_key_down(KeyCode::Down) { self.params.base_y_offset += DEFAULT_MOVE_SPEED }
+        if is_key_pressed(KeyCode::O) {
+            self.params.base_x_offset = 0.0;
+            self.params.base_y_offset = 0.0
+        }
+        if is_key_pressed(KeyCode::R) {
+            self.params.z_offset = 0.0;
+            self.params.base_x_offset = 0.0;
+            self.params.base_y_offset = 0.0;
+            self.params.noise_speed = DEFAULT_NOISE_SPEED;
+            self.params.noise_scale = DEFAULT_NOISE_SCALE;
+        }
+        if is_key_down(KeyCode::H) { self.show_help = !self.show_help }
+        if is_key_down(KeyCode::X) { self.export_as_svg() }
+        if is_key_down(KeyCode::Escape) { quit() }
+
+        let Vec2 { x: mouse_delta_x, y: mouse_delta_y } = mouse_delta_position();
+
+        if is_mouse_button_down(MouseButton::Left) {
+            if mouse_delta_x != 0.0 {
+                self.params.base_x_offset += mouse_delta_x as f64 / 10.0;
+            }
+
+            if mouse_delta_y != 0.0 {
+                self.params.base_y_offset += mouse_delta_y as f64 / 10.0;
+            }
+        }
+
+        self.visualizer.update(&mut self.params);
+    }
+
+    pub fn render(&self) {
+        self.visualizer.render();
     }
 
     fn next_noise(&mut self) {
@@ -123,65 +168,5 @@ impl State {
             "SVG successfully exported to {}",
             &svg_filepath.to_string_lossy()
         );
-    }
-}
-
-impl EventHandler<GameError> for State {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult<()> {
-        self.visualizer.update(&mut self.params);
-
-        Ok(())
-    }
-
-    fn draw(&mut self, ctx: &mut Context) -> GameResult<()> {
-        graphics::clear(ctx, graphics::Color::new(0.0, 0.0, 0.0, 1.0));
-
-        if let Some(line_mesh) = &self.visualizer.build_mesh(ctx) {
-            graphics::draw(
-                ctx,
-                line_mesh,
-                graphics::DrawParam::new().dest([0.0, 0.0]).rotation(0.0),
-            )?;
-        }
-
-        graphics::present(ctx)
-    }
-
-    fn key_down_event(
-        &mut self,
-        ctx: &mut Context,
-        keycode: KeyCode,
-        _keymod: KeyMods,
-        repeat: bool,
-    ) {
-        match keycode {
-            KeyCode::B if !repeat => self.previous_noise(),
-            KeyCode::N if !repeat => self.next_noise(),
-            KeyCode::J if !repeat => self.previous_visualizer(),
-            KeyCode::K if !repeat => self.next_visualizer(),
-            KeyCode::Minus => self.params.noise_scale += DEFAULT_NOISE_SCALE_INCREMENT,
-            KeyCode::Equals => self.params.noise_scale -= DEFAULT_NOISE_SCALE_INCREMENT,
-            KeyCode::LBracket => self.params.noise_speed -= DEFAULT_NOISE_SPEED_INCREMENT,
-            KeyCode::RBracket => self.params.noise_speed += DEFAULT_NOISE_SPEED_INCREMENT,
-            KeyCode::Left => self.params.base_x_offset -= DEFAULT_MOVE_SPEED,
-            KeyCode::Right => self.params.base_x_offset += DEFAULT_MOVE_SPEED,
-            KeyCode::Up => self.params.base_y_offset -= DEFAULT_MOVE_SPEED,
-            KeyCode::Down => self.params.base_y_offset += DEFAULT_MOVE_SPEED,
-            KeyCode::O if !repeat => {
-                self.params.base_x_offset = 0.0;
-                self.params.base_y_offset = 0.0
-            }
-            KeyCode::R if !repeat => {
-                self.params.z_offset = 0.0;
-                self.params.base_x_offset = 0.0;
-                self.params.base_y_offset = 0.0;
-                self.params.noise_speed = DEFAULT_NOISE_SPEED;
-                self.params.noise_scale = DEFAULT_NOISE_SCALE;
-            }
-            KeyCode::H => self.show_help = !self.show_help,
-            KeyCode::X => self.export_as_svg(),
-            KeyCode::Escape => ggez::event::quit(ctx),
-            _ => (), // Do nothing
-        }
     }
 }

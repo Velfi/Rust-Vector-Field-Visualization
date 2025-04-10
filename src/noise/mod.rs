@@ -1,49 +1,49 @@
 mod domain_warping_noise;
 
 use domain_warping_noise::DomainWarpingNoise;
-use noise::NoiseFn;
+use noise::{NoiseFn, Simplex};
 
 use crate::noise::domain_warping_noise::DomainWarpingNoiseParams;
 
-pub fn new_noise_fn_by_index(index: usize) -> Box<dyn NoiseFn<[f64; 3]>> {
+pub fn new_noise_fn_by_index(index: usize) -> Box<dyn NoiseFn<f64, 3>> {
     match index {
         0 => {
-            println!("now using Domain Warping Noise generator");
+            log::info!("now using Domain Warping Noise generator");
             let dwn_params = DomainWarpingNoiseParams::random();
-            Box::new(DomainWarpingNoise::new(dwn_params))
+            Box::new(DomainWarpingNoise::<Simplex>::new(dwn_params))
         }
         1 => {
-            println!("now using Billowy Noise generator");
+            log::info!("now using Billowy Noise generator");
             // TODO allow setting frequency, lacunarity, octaves, persistence
-            Box::new(noise::Billow::new())
+            Box::new(noise::Billow::<Simplex>::new(0))
         }
         2 => {
-            println!("now using Heterogenous Multifractal Noise generator");
-            Box::new(noise::BasicMulti::new())
+            log::info!("now using Heterogenous Multifractal Noise generator");
+            Box::new(noise::BasicMulti::<Simplex>::new(0))
         }
         3 => {
-            println!("now using Fractal Brownian Motion Noise generator");
-            Box::new(noise::Fbm::new())
+            log::info!("now using Fractal Brownian Motion Noise generator");
+            Box::new(noise::Fbm::<Simplex>::new(0))
         }
         4 => {
-            println!("now using Hybrid Multifractal Noise generator");
-            Box::new(noise::HybridMulti::new())
+            log::info!("now using Hybrid Multifractal Noise generator");
+            Box::new(noise::HybridMulti::<Simplex>::new(0))
         }
         5 => {
-            println!("now using Open Simplex Noise generator");
-            Box::new(noise::OpenSimplex::new())
+            log::info!("now using Open Simplex Noise generator");
+            Box::new(noise::OpenSimplex::new(0))
         }
         6 => {
-            println!("now using Perlin Noise generator");
-            Box::new(noise::Perlin::new())
+            log::info!("now using Perlin Noise generator");
+            Box::new(noise::Perlin::new(0))
         }
         7 => {
-            println!("now using Value Noise generator");
-            Box::new(noise::Value::new())
+            log::info!("now using Value Noise generator");
+            Box::new(noise::Value::new(0))
         }
         8 => {
-            println!("now using Worley Noise generator");
-            Box::new(noise::Worley::new())
+            log::info!("now using Worley Noise generator");
+            Box::new(noise::Worley::new(0))
         }
         _ => unreachable!(),
     }

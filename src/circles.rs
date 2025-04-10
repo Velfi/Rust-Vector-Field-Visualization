@@ -1,15 +1,11 @@
 use crate::{
     consts::{
-        CIRCLE_TOLERANCE, GRID_CELL_H, GRID_CELL_W, GRID_SIZE_X, GRID_SIZE_Y, SCREEN_H, SCREEN_W,
-        VECTOR_SCALE, VECTOR_WIDTH,
+        GRID_CELL_H, GRID_CELL_W, GRID_SIZE_X, GRID_SIZE_Y, SCREEN_H, SCREEN_W, VECTOR_SCALE,
     },
     visualizer::{Visualizer, VisualizerParams},
 };
-use ggez::{
-    graphics::{Color, DrawMode, Mesh, MeshBuilder},
-    Context,
-};
 use log::info;
+use macroquad::prelude::*;
 use svg::node::element;
 
 type Point2<T> = [T; 2];
@@ -91,31 +87,10 @@ impl Visualizer for Circles {
         }
     }
 
-    fn build_mesh(&self, ctx: &mut Context) -> Option<Mesh> {
-        let mut circle_mesh_builder = MeshBuilder::new();
-        let color = Color::new(1.0, 1.0, 1.0, 1.0);
-
-        for circle in self.circles.iter() {
-            let [x, y] = circle.location;
-
-            circle_mesh_builder
-                .circle(
-                    DrawMode::stroke(VECTOR_WIDTH as f32),
-                    [x as f32, y as f32],
-                    circle.radius as f32,
-                    CIRCLE_TOLERANCE,
-                    color,
-                )
-                .unwrap();
-        }
-
-        circle_mesh_builder.build(ctx).ok()
-    }
-
     fn build_svg_document_from_state(&self) -> svg::Document {
         let doc = svg::Document::new().set("viewBox", (0, 0, SCREEN_W, SCREEN_H));
 
-        let mut group = svg::node::element::Group::new()
+        let mut group = element::Group::new()
             .set("fill", "none")
             .set("stroke", "black")
             .set("stroke-width", "0.3mm");
@@ -132,7 +107,7 @@ impl Visualizer for Circles {
             group = group.add(path);
         }
 
-        let bounding_rect = svg::node::element::Rectangle::new()
+        let bounding_rect = element::Rectangle::new()
             .set("width", SCREEN_W)
             .set("height", SCREEN_H)
             .set("fill", "none")
@@ -140,5 +115,13 @@ impl Visualizer for Circles {
             .set("stroke-width", "1mm");
 
         doc.add(group).add(bounding_rect)
+    }
+
+    fn render(&self) {
+        for circle in self.circles.iter() {
+            let [x, y] = circle.location;
+
+            draw_circle(x as f32, y as f32, circle.radius as f32, WHITE);
+        }
     }
 }

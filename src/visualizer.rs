@@ -2,7 +2,6 @@ use crate::{
     consts::{DEFAULT_NOISE_SCALE, DEFAULT_NOISE_SPEED},
     noise::new_noise_fn_by_index,
 };
-use ggez::{graphics::Mesh, Context};
 use noise::NoiseFn;
 
 pub struct VisualizerParams {
@@ -10,7 +9,7 @@ pub struct VisualizerParams {
     pub base_y_offset: f64,
     pub noise_scale: f64,
     pub noise_speed: f64,
-    pub noise_fn: Box<dyn NoiseFn<[f64; 3]>>,
+    pub noise_fn: Box<dyn NoiseFn<f64, 3>>,
     pub z_offset: f64,
 }
 
@@ -31,6 +30,6 @@ impl Default for VisualizerParams {
 
 pub trait Visualizer {
     fn update(&mut self, params: &mut VisualizerParams);
-    fn build_mesh(&self, ctx: &mut Context) -> Option<Mesh>;
     fn build_svg_document_from_state(&self) -> svg::Document;
+    fn render(&self);
 }

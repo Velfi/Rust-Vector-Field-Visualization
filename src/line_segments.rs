@@ -5,13 +5,10 @@ use crate::{
     },
     visualizer::{Visualizer, VisualizerParams},
 };
-use ggez::{
-    graphics::{Color, Mesh, MeshBuilder},
-    Context,
-};
 use log::info;
 use std::f64::consts::TAU;
 use svg::node::element;
+use macroquad::prelude::*;
 
 type Point2<T> = [T; 2];
 
@@ -93,26 +90,10 @@ impl Visualizer for LineSegments {
         }
     }
 
-    fn build_mesh(&self, ctx: &mut Context) -> Option<Mesh> {
-        let mut line_mesh_builder = MeshBuilder::new();
-        let color = Color::new(1.0, 1.0, 1.0, 1.0);
-
-        for line_segment in self.line_segments.iter() {
-            let [[x1, y1], [x2, y2]] = line_segment.points;
-            let points = [[x1 as f32, y1 as f32], [x2 as f32, y2 as f32]];
-
-            line_mesh_builder
-                .line(&points, VECTOR_WIDTH as f32, color)
-                .unwrap();
-        }
-
-        line_mesh_builder.build(ctx).ok()
-    }
-
     fn build_svg_document_from_state(&self) -> svg::Document {
         let doc = svg::Document::new().set("viewBox", (0, 0, SCREEN_W, SCREEN_H));
 
-        let mut group = svg::node::element::Group::new()
+        let mut group = element::Group::new()
             .set("fill", "none")
             .set("stroke", "black")
             .set("stroke-width", "0.3mm");
@@ -130,7 +111,7 @@ impl Visualizer for LineSegments {
             group = group.add(path);
         }
 
-        let bounding_rect = svg::node::element::Rectangle::new()
+        let bounding_rect = element::Rectangle::new()
             .set("width", SCREEN_W)
             .set("height", SCREEN_H)
             .set("fill", "none")
@@ -138,5 +119,12 @@ impl Visualizer for LineSegments {
             .set("stroke-width", "1mm");
 
         doc.add(group).add(bounding_rect)
+    }
+
+    fn render(&self) {
+        for line_segment in self.line_segments.iter() {
+            let [[x1, y1], [x2, y2]] = line_segment.points;
+            draw_line(x1 as f32, y1 as f32, x2 as f32, y2 as f32,VECTOR_WIDTH as f32, WHITE);
+        }
     }
 }

@@ -1,8 +1,8 @@
 [package]
 name = "vector_field_visualization"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Zelda Hessler <zelda.hessler@pm.me>"]
-edition = "2018"
+edition = "2024"
 
 [profile.release]
 lto = "thin"
@@ -10,9 +10,9 @@ lto = "thin"
 [dependencies]
 chrono = "0.4.19"
 dotenv = "0.15.0"
-env_logger = "0.9.0"
-ggez = "0.6.0-rc2"
+env_logger = "0.11.8"
 log = "0.4.14"
-noise = "0.7.0"
-rand = "0.8.4"
-svg = "0.10.0"
+noise = "0.9.0"
+rand = "0.9.0"
+svg = "0.18.0"
+macroquad = "0.4.14"
